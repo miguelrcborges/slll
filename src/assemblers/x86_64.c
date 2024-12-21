@@ -37,10 +37,12 @@ void x86_64_AddReg(x86_64_AssemblerContext *c, u8 reg) {
 	assert(c->remaining_operands > 0);
 	c->operands[c->current_operand].kind = X86_64_REGISTER;
 	c->operands[c->current_operand].value = reg;
-	if (reg >= X86_64_RAX && reg <= X86_64_R15) {
+	if (x86_64_IsReg64(reg)) {
 		c->operands[c->current_operand].size = X86_64_QWORD;
-	} else if (reg >= X86_64_EAX && reg <= X86_64_R15D) {
+	} else if (x86_64_IsReg32(reg)) {
 		c->operands[c->current_operand].size = X86_64_DWORD;
+	} else if (x86_64_IsReg16(reg)) {
+		c->operands[c->current_operand].size = X86_64_WORD;
 	} else {
 		assert(!"Invalid register.");
 	}

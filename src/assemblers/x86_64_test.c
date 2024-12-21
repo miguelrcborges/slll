@@ -20,7 +20,8 @@ int main(void) {
 	x86_64_StartInstruction(&c, X86_64_RET);
 	*/
 	x86_64_StartInstruction(&c, X86_64_PUSH);
-		x86_64_AddImmediate(&c, 65534, X86_64_DWORD);
+		//x86_64_AddImmediate(&c, 65534, X86_64_DWORD);
+		x86_64_AddReg(&c, X86_64_AX);
 	
 	x86_64_StartInstruction(&c, X86_64_RET);
 
