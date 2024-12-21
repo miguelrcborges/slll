@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 int main(void) {
-	x86_64_AssemberContext c = {0};
+	x86_64_AssemblerContext c = {0};
 	c.assembler_output_memory_size = 4096 * 8;
 	c.assembler_output_memory = VirtualAlloc(NULL, c.assembler_output_memory_size, MEM_RESERVE|MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 

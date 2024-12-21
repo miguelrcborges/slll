@@ -5,14 +5,14 @@ enum x86_64_OPERANDS_TYPES {
 	X86_64_IMMEDIATE,
 };
 
-static void x86_64_WriteInstruction(x86_64_AssemberContext *c);
-static void force_inline x86_64_WriteByte(x86_64_AssemberContext *c, u8 byte) {
+static void x86_64_WriteInstruction(x86_64_AssemblerContext *c);
+static void force_inline x86_64_WriteByte(x86_64_AssemblerContext *c, u8 byte) {
 	assert(c->assember_output_memory_cursor < c->assembler_output_memory_size);
 	c->assembler_output_memory[c->assember_output_memory_cursor] = byte;
 	c->assember_output_memory_cursor += 1;
 }
 
-void x86_64_StartInstruction(x86_64_AssemberContext *c, u16 instrunction) {
+void x86_64_StartInstruction(x86_64_AssemblerContext *c, u16 instrunction) {
 	static const u8 ParamsPerInstruction[X86_64_INSTRUCTIONS_COUNT] = {
 		[X86_64_PUSH] = 1,
 		[X86_64_POP] = 1,
@@ -33,7 +33,7 @@ void x86_64_StartInstruction(x86_64_AssemberContext *c, u16 instrunction) {
 }
 
 
-void x86_64_AddReg(x86_64_AssemberContext *c, u8 reg) {
+void x86_64_AddReg(x86_64_AssemblerContext *c, u8 reg) {
 	assert(c->remaining_operands > 0);
 	c->operands[c->current_operand].kind = X86_64_REGISTER;
 	c->operands[c->current_operand].value = reg;
@@ -53,7 +53,7 @@ void x86_64_AddReg(x86_64_AssemberContext *c, u8 reg) {
 } 
 
 
-void x86_64_AddImmediate(x86_64_AssemberContext *c, u64 immediate, u8 immediate_width) {
+void x86_64_AddImmediate(x86_64_AssemblerContext *c, u64 immediate, u8 immediate_width) {
 	assert(c->remaining_operands > 0);
 	c->operands[c->current_operand].kind = X86_64_IMMEDIATE;
 	c->operands[c->current_operand].value = immediate;
@@ -66,7 +66,7 @@ void x86_64_AddImmediate(x86_64_AssemberContext *c, u64 immediate, u8 immediate_
 }
 
 
-static void x86_64_WriteInstruction(x86_64_AssemberContext *c) {
+static void x86_64_WriteInstruction(x86_64_AssemblerContext *c) {
 	switch (c->current_instruction) {
 		case X86_64_PUSH: {
 			if (c->operands[0].kind == X86_64_REGISTER) {

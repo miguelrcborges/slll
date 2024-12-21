@@ -13,11 +13,11 @@ typedef struct {
 	u16 current_instruction;
 	u8 current_operand;
 	u8 remaining_operands;
-} x86_64_AssemberContext;
+} x86_64_AssemblerContext;
 
-void x86_64_StartInstruction(x86_64_AssemberContext *c, u16 instrunction);
-void x86_64_AddReg(x86_64_AssemberContext *c, u8 reg);
-void x86_64_AddImmediate(x86_64_AssemberContext *c, u64 immediate, u8 immediate_width);
+void x86_64_StartInstruction(x86_64_AssemblerContext *c, u16 instrunction);
+void x86_64_AddReg(x86_64_AssemblerContext *c, u8 reg);
+void x86_64_AddImmediate(x86_64_AssemblerContext *c, u64 immediate, u8 immediate_width);
 
 
 enum x86_64_INSTRUCTIONS {
