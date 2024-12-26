@@ -79,12 +79,11 @@ static void x86_64_WriteInstruction(x86_64_AssemblerContext *c) {
 						x86_64_WriteByte(c, 0x66);
 						reg -= (X86_64_AX - X86_64_RAX);
 					}
-					if (reg < X86_64_R8) {
-						x86_64_WriteByte(c, 0x50 + (u8)reg);
-					} else {
+					if (reg >= X86_64_R8) {
 						x86_64_WriteByte(c, 0x41);
-						x86_64_WriteByte(c, 0x50 + (u8)reg);
+						reg -= (X86_64_R8 - X86_64_RAX);
 					}
+					x86_64_WriteByte(c, (u8) (0x50+reg));
 				} else {
 					assert(!"Invalid register to push on x86_64.");
 				}
@@ -132,12 +131,11 @@ static void x86_64_WriteInstruction(x86_64_AssemblerContext *c) {
 						x86_64_WriteByte(c, 0x66);
 						reg -= (X86_64_AX - X86_64_RAX);
 					}
-					if (reg < X86_64_R8) {
-						x86_64_WriteByte(c, 0x58 + (u8)reg);
-					} else {
+					if (reg >= X86_64_R8) {
 						x86_64_WriteByte(c, 0x41);
-						x86_64_WriteByte(c, 0x58 + (u8)reg);
+						reg -= (X86_64_R8 - X86_64_RAX);
 					}
+					x86_64_WriteByte(c, (u8) (0x58+reg));
 				} else {
 					assert(!"Invalid register to pop on x86_64.");
 				}
