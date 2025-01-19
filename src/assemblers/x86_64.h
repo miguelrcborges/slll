@@ -90,12 +90,19 @@ static const DisplacementScale Scale8x = { 3 };
 
 void x86_64_PushQReg64(x86_64_AssemblerContext *c, Reg64 r);
 void x86_64_PushWReg16(x86_64_AssemblerContext *c, Reg16 r);
-void x86_64_PushDImm32(x86_64_AssemblerContext *c, u32 value);
+void x86_64_PushQImm32(x86_64_AssemblerContext *c, u32 value);
 void x86_64_PushWImm16(x86_64_AssemblerContext *c, u16 value);
 void x86_64_PushQRM64(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale);
 void x86_64_PushWRM64(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale);
 void x86_64_PushQRM32(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale);
 void x86_64_PushWRM32(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale);
+
+void x86_64_PopQReg64(x86_64_AssemblerContext *c, Reg64 r);
+void x86_64_PopWReg16(x86_64_AssemblerContext *c, Reg16 r);
+void x86_64_PopQRM64(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale);
+void x86_64_PopWRM64(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale);
+void x86_64_PopQRM32(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale);
+void x86_64_PopWRM32(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale);
 
 void x86_64_Ret(x86_64_AssemblerContext *c);
 
