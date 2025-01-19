@@ -1,157 +1,134 @@
 #include "x86_64.h"
 
-enum x86_64_OPERANDS_TYPES {
-	X86_64_REGISTER,
-	X86_64_IMMEDIATE,
-};
-
-static void x86_64_WriteInstruction(x86_64_AssemblerContext *c);
-static void force_inline x86_64_WriteByte(x86_64_AssemblerContext *c, u8 byte) {
+force_inline x86_64_WriteByte(x86_64_AssemblerContext *c, u8 byte) {
 	assert(c->assember_output_memory_cursor < c->assembler_output_memory_size);
 	c->assembler_output_memory[c->assember_output_memory_cursor] = byte;
 	c->assember_output_memory_cursor += 1;
 }
 
-void x86_64_StartInstruction(x86_64_AssemblerContext *c, u16 instrunction) {
-	static const u8 ParamsPerInstruction[X86_64_INSTRUCTIONS_COUNT] = {
-		[X86_64_PUSH] = 1,
-		[X86_64_POP] = 1,
-		[X86_64_RET] = 0,
-		[X86_64_MOV] = 2,
-	};
 
-	assert(c->remaining_operands == 0);
-	assert(instrunction < X86_64_INSTRUCTIONS_COUNT);
-	u8 n_params = ParamsPerInstruction[instrunction];
-
-	c->current_instruction = instrunction;
-	c->current_operand = 0;
-	c->remaining_operands = n_params;
-	if (n_params == 0) {
-		x86_64_WriteInstruction(c);
+void x86_64_PushQReg64(x86_64_AssemblerContext *c, Reg64 r) {
+	u8 op_byte = r.Value + 0x50;
+	if (r.Value >= R8.Value) {
+		x86_64_WriteByte(c, 0x41);
+		op_byte -= R8.Value;
 	}
+	x86_64_WriteByte(c, op_byte);
 }
 
+void x86_64_PushWReg16(x86_64_AssemblerContext *c, Reg16 r) {
+	x86_64_WriteByte(c, 0x66);
+	Reg64 new_reg = { r.Value };
+	x86_64_PushQReg64(c, new_reg);
+}
 
-void x86_64_AddReg(x86_64_AssemblerContext *c, u8 reg) {
-	assert(c->remaining_operands > 0);
-	c->operands[c->current_operand].kind = X86_64_REGISTER;
-	c->operands[c->current_operand].value = reg;
-	if (x86_64_IsReg64(reg)) {
-		c->operands[c->current_operand].size = X86_64_QWORD;
-	} else if (x86_64_IsReg32(reg)) {
-		c->operands[c->current_operand].size = X86_64_DWORD;
-	} else if (x86_64_IsReg16(reg)) {
-		c->operands[c->current_operand].size = X86_64_WORD;
+void x86_64_PushDImm32(x86_64_AssemblerContext *c, u32 value) {
+	u8 cond1 = value <= ((u32)127);
+	u8 cond2 = value >= ((u32)-128);
+	if (cond1 || cond2) {
+		x86_64_WriteByte(c, 0x6A);
+		x86_64_WriteByte(c, (u8) value);
 	} else {
-		assert(!"Invalid register.");
-	}
-
-	c->current_operand += 1;
-	c->remaining_operands -= 1;
-	if (c->remaining_operands == 0) {
-		x86_64_WriteInstruction(c);
-	}
-} 
-
-
-void x86_64_AddImmediate(x86_64_AssemblerContext *c, u64 immediate, u8 immediate_width) {
-	assert(c->remaining_operands > 0);
-	c->operands[c->current_operand].kind = X86_64_IMMEDIATE;
-	c->operands[c->current_operand].value = immediate;
-	c->operands[c->current_operand].size = immediate_width;
-	c->current_operand += 1;
-	c->remaining_operands -= 1;
-	if (c->remaining_operands == 0) {
-		x86_64_WriteInstruction(c);
+		x86_64_WriteByte(c, 0x68);
+		x86_64_WriteByte(c, (u8) value);
+		x86_64_WriteByte(c, (u8) (value >> 8));
+		x86_64_WriteByte(c, (u8) (value >> 16));
+		x86_64_WriteByte(c, (u8) (value >> 24));
 	}
 }
 
+void x86_64_PushWImm16(x86_64_AssemblerContext *c, u16 value) {
+	u8 cond1 = value <= ((u16)127);
+	u8 cond2 = value >= ((u16)-128);
+	x86_64_WriteByte(c, 0x66);
+	if (cond1 || cond2) {
+		x86_64_WriteByte(c, 0x6A);
+		x86_64_WriteByte(c, (u8) value);
+	} else {
+		x86_64_WriteByte(c, 0x68);
+		x86_64_WriteByte(c, (u8) value);
+		x86_64_WriteByte(c, (u8) (value >> 8));
+	}
+}
 
-static void x86_64_WriteInstruction(x86_64_AssemblerContext *c) {
-	switch (c->current_instruction) {
-		case X86_64_PUSH: {
-			if (c->operands[0].kind == X86_64_REGISTER) {
-				usize reg = c->operands[0].value;
-				usize reg_size = c->operands[0].size;
-				if (reg_size == X86_64_WORD || reg_size == X86_64_QWORD) {
-					if (reg_size == X86_64_WORD) {
-						x86_64_WriteByte(c, 0x66);
-						reg -= (X86_64_AX - X86_64_RAX);
-					}
-					if (reg >= X86_64_R8) {
-						x86_64_WriteByte(c, 0x41);
-						reg -= (X86_64_R8 - X86_64_RAX);
-					}
-					x86_64_WriteByte(c, (u8) (0x50+reg));
-				} else {
-					assert(!"Invalid register to push on x86_64.");
-				}
-
-			} else if (c->operands[0].kind == X86_64_IMMEDIATE) {
-				if (c->operands[0].size == X86_64_WORD) {
-					x86_64_WriteByte(c, 0x66);
-				} else if (c->operands[0].size != X86_64_DWORD) {
-					assert(!"Invalid size of this instrunction.");
-				}
-
-				u8 can_be_byte_1 = c->operands[0].value < ((u64)1 << 7);
-				u8 can_be_byte_2;
-				if (c->operands[0].size == X86_64_WORD) {
-					can_be_byte_2 = c->operands[0].value > ((u64)((u16)-127));
-				} else {
-					can_be_byte_2 = c->operands[0].value > ((u64)((u32)-127));
-				}
-				if (can_be_byte_1 || can_be_byte_2) {
-					x86_64_WriteByte(c, 0x6A);
-					x86_64_WriteByte(c, (u8)c->operands[0].value);
-				} else if (c->operands[0].size == X86_64_WORD) {
-					x86_64_WriteByte(c, 0x68);
-					x86_64_WriteByte(c, (u8)c->operands[0].value);
-					x86_64_WriteByte(c, (u8)(c->operands[0].value >> 8));
-				} else {
-					x86_64_WriteByte(c, 0x68);
-					x86_64_WriteByte(c, (u8)c->operands[0].value);
-					x86_64_WriteByte(c, (u8)(c->operands[0].value >> 8));
-					x86_64_WriteByte(c, (u8)(c->operands[0].value >> 16));
-					x86_64_WriteByte(c, (u8)(c->operands[0].value >> 24));
-				}
+void x86_64_PushQRM64(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale) {
+	assert(index.Value != RSP.Value);
+	if (base.Value == Reg64_None.Value && index.Value == Reg64_None.Value) {
+		x86_64_WriteByte(c, 0xFF);
+		x86_64_WriteByte(c, 0x34);
+		x86_64_WriteByte(c, 0x25);
+		x86_64_WriteByte(c, (u8) ((u32)offset));
+		x86_64_WriteByte(c, (u8) ((u32)offset >> 8));
+		x86_64_WriteByte(c, (u8) ((u32)offset >> 16));
+		x86_64_WriteByte(c, (u8) ((u32)offset >> 24));
+	} else {
+		u8 is_base_extension = (base.Value >= R8.Value) && (base.Value <= R15.Value);
+		u8 is_index_extension = (index.Value >= R8.Value) && (index.Value <= R15.Value);
+		if (is_base_extension || is_index_extension) {
+			u8 byte_to_write = is_base_extension ? 0x41 : 0x42;
+			byte_to_write = is_base_extension && is_index_extension ? 0x43 : byte_to_write;
+			base.Value = is_base_extension ? base.Value - R8.Value : base.Value;
+			index.Value = is_index_extension ? index.Value - R8.Value : index.Value;
+			x86_64_WriteByte(c, byte_to_write);
+		}
+		x86_64_WriteByte(c, 0xFF);
+		u8 can_offset_be_single_byte = offset >= -128 && offset <= 127;
+		if (index.Value != Reg64_None.Value) {
+			if (offset == 0) {
+				x86_64_WriteByte(c, 0x34);
+			} else if (can_offset_be_single_byte) {
+				x86_64_WriteByte(c, 0x74);
 			} else {
-				assert(!"Invalid parameter kind.");
+				x86_64_WriteByte(c, 0xB4);
 			}
-			break;
-		}
-		
-		case X86_64_POP: {
-			if (c->operands[0].kind == X86_64_REGISTER) {
-				usize reg = c->operands[0].value;
-				usize reg_size = c->operands[0].size;
-				if (reg_size == X86_64_WORD || reg_size == X86_64_QWORD) {
-					if (reg_size == X86_64_WORD) {
-						x86_64_WriteByte(c, 0x66);
-						reg -= (X86_64_AX - X86_64_RAX);
-					}
-					if (reg >= X86_64_R8) {
-						x86_64_WriteByte(c, 0x41);
-						reg -= (X86_64_R8 - X86_64_RAX);
-					}
-					x86_64_WriteByte(c, (u8) (0x58+reg));
+			u8 sib_byte = scale.Value << 6;
+			sib_byte |= (index.Value << 3); // Note that regs >= R8 are set back to RAX-RDI range
+			sib_byte |= base.Value;
+			x86_64_WriteByte(c, sib_byte);
+		} else {
+			u8 modrm_byte = 0b00110000; // start by setting PUSH op
+			if (offset != 0) {
+				if (can_offset_be_single_byte) {
+					modrm_byte |= 0b01 << 6;
 				} else {
-					assert(!"Invalid register to pop on x86_64.");
+					modrm_byte |= 0b10 << 6;
 				}
-			} else {
-				assert(!"Invalid parameter kind.");
 			}
-			break;
+			modrm_byte |= base.Value;
 		}
-
-		case X86_64_RET: {
-			x86_64_WriteByte(c, 0xC3);
-			break;
-		}
-
-		default: {
-			assert(!"Invalid Instrunction");
+		if (offset != 0) {
+			if (can_offset_be_single_byte) {
+				x86_64_WriteByte(c, (u8) ((u32)offset));
+			} else {
+				x86_64_WriteByte(c, (u8) ((u32)offset));
+				x86_64_WriteByte(c, (u8) ((u32)offset >> 8));
+				x86_64_WriteByte(c, (u8) ((u32)offset >> 16));
+				x86_64_WriteByte(c, (u8) ((u32)offset >> 24));
+			}
 		}
 	}
+}
+
+void x86_64_PushWRM64(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale) {
+	x86_64_WriteByte(c, 0x66);
+	x86_64_PushQRM64(c, offset, base, index, scale);
+}
+
+void x86_64_PushQRM32(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale) {
+	x86_64_WriteByte(c, 0x67);
+	Reg64 new_base = { base.Value };
+	Reg64 new_index = { index.Value };
+	x86_64_PushQRM64(c, offset, new_base, new_index, scale);
+}
+
+void x86_64_PushWRM32(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale) {
+	x86_64_WriteByte(c, 0x67);
+	Reg64 new_base = { base.Value };
+	Reg64 new_index = { index.Value };
+	x86_64_PushWRM64(c, offset, new_base, new_index, scale);
+}
+
+
+void x86_64_Ret(x86_64_AssemblerContext *c) {
+	x86_64_WriteByte(c, 0xC3);
 }

@@ -1,5 +1,4 @@
 #ifndef MBBASE_H
-#define MBBASE_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -44,13 +43,13 @@ enum {
 #endif
 
 #if defined(__GNUC__)
-	#define force_inline __attribute__((always_inline)) inline
+	#define force_inline static __attribute__((always_inline)) inline
 	#define no_inline __attribute__((noinline))
 #elif defined(_MSC_VER)
-	#define force_inline __forceinline inline
+	#define force_inline static __forceinline
 	#define no_inline __declspec(noinline)
 #else
-	#define force_inline inline
+	#define force_inline static inline
 	#define no_inline
 #endif
 
@@ -63,8 +62,21 @@ enum {
 #endif
 
 #if !__has_builtin(__builtin_unreachable)
-	#define __builtin_unreachable()
+	#ifdef _MSC_VER
+		#define __builtin_unreachable() __assume(0)	
+	#else
+		#define __builtin_unreachable()
+	#endif
 #endif
+
+#if !__has_builtin(__builtin_trap)
+	#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
+		#define __builtin_trap() __debugbreak()
+	#else
+		#define __builtin_trap() (*(int *)0)
+	#endif
+#endif
+		
 
 #define len(a) (sizeof(a)/sizeof(*(a)))
 #define min(a,b) (((a)<(b))?(a):(b))
@@ -72,4 +84,5 @@ enum {
 #define clamp(a,x,b) (((x)<(a))?(a):((x)>(b))?(b):(x))
 
 
-#endif /* MBBASE_H */
+#define MBBASE_H
+#endif

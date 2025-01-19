@@ -2,97 +2,102 @@
 #include "../c.h"
 
 typedef struct {
-	struct {
-		u8 kind;
-		u8 size;
-		u64 value;
-	} operands[3];
 	u8 *assembler_output_memory;
 	usize assembler_output_memory_size;
 	usize assember_output_memory_cursor;
-	u16 current_instruction;
-	u8 current_operand;
-	u8 remaining_operands;
 } x86_64_AssemblerContext;
 
-void x86_64_StartInstruction(x86_64_AssemblerContext *c, u16 instrunction);
-void x86_64_AddReg(x86_64_AssemblerContext *c, u8 reg);
-void x86_64_AddImmediate(x86_64_AssemblerContext *c, u64 immediate, u8 immediate_width);
+
+typedef struct {
+	u8 Value;
+} Reg64;
+
+typedef struct {
+	u8 Value;
+} Reg32;
+
+typedef struct {
+	u8 Value;
+} Reg16;
+
+typedef struct {
+	u8 Value;
+} DisplacementScale;
 
 
-enum x86_64_INSTRUCTIONS {
-	X86_64_PUSH,
-	X86_64_POP,
-	X86_64_RET,
-	X86_64_MOV,
-
-	X86_64_INSTRUCTIONS_COUNT
-};
-
-enum X86_64_REGISTERS {
-	X86_64_RAX,
-	X86_64_RCX,
-	X86_64_RDX,
-	X86_64_RBX,
-	X86_64_RSP,
-	X86_64_RBP,
-	X86_64_RSI,
-	X86_64_RDI,
-	X86_64_R8,
-	X86_64_R9,
-	X86_64_R10,
-	X86_64_R11,
-	X86_64_R12,
-	X86_64_R13,
-	X86_64_R14,
-	X86_64_R15,
-
-	X86_64_EAX,
-	X86_64_ECX,
-	X86_64_EDX,
-	X86_64_EBX,
-	X86_64_ESP,
-	X86_64_EBP,
-	X86_64_ESI,
-	X86_64_EDI,
-	X86_64_R8D,
-	X86_64_R9D,
-	X86_64_R10D,
-	X86_64_R11D,
-	X86_64_R12D,
-	X86_64_R13D,
-	X86_64_R14D,
-	X86_64_R15D,
-
-	X86_64_AX,
-	X86_64_CX,
-	X86_64_DX,
-	X86_64_BX,
-	X86_64_SP,
-	X86_64_BP,
-	X86_64_SI,
-	X86_64_DI,
-	X86_64_R8W,
-	X86_64_R9W,
-	X86_64_R10W,
-	X86_64_R11W,
-	X86_64_R12W,
-	X86_64_R13W,
-	X86_64_R14W,
-	X86_64_R15W,
-};
-
-#define x86_64_IsReg64(reg) ((reg)>=X86_64_RAX && (reg)<=X86_64_R15)
-#define x86_64_IsReg32(reg) ((reg)>=X86_64_EAX && (reg)<=X86_64_R15D)
-#define x86_64_IsReg16(reg) ((reg)>=X86_64_AX && (reg)<=X86_64_R15W)
+static const Reg64 RAX = {  0 };
+static const Reg64 RCX = {  1 };
+static const Reg64 RDX = {  2 };
+static const Reg64 RBX = {  3 };
+static const Reg64 RSP = {  4 };
+static const Reg64 RBP = {  5 };
+static const Reg64 RSI = {  6 };
+static const Reg64 RDI = {  7 };
+static const Reg64 R8  = {  8 };
+static const Reg64 R9  = {  9 };
+static const Reg64 R10 = { 10 };
+static const Reg64 R11 = { 11 };
+static const Reg64 R12 = { 12 };
+static const Reg64 R13 = { 13 };
+static const Reg64 R14 = { 14 };
+static const Reg64 R15 = { 15 };
+static const Reg64 Reg64_None = { 16 };
 
 
-enum X86_64_SIZES {
-	X86_64_BYTE,
-	X86_64_WORD,
-	X86_64_DWORD,
-	X86_64_QWORD,
-};
+static const Reg32 EAX  = {  0 };
+static const Reg32 ECX  = {  1 };
+static const Reg32 EDX  = {  2 };
+static const Reg32 EBX  = {  3 };
+static const Reg32 ESP  = {  4 };
+static const Reg32 EBP  = {  5 };
+static const Reg32 ESI  = {  6 };
+static const Reg32 EDI  = {  7 };
+static const Reg32 R8D  = {  8 };
+static const Reg32 R9D  = {  9 };
+static const Reg32 R10D = { 10 };
+static const Reg32 R11D = { 11 };
+static const Reg32 R12D = { 12 };
+static const Reg32 R13D = { 13 };
+static const Reg32 R14D = { 14 };
+static const Reg32 R15D = { 15 };
+static const Reg32 Reg32_None = { 16 };
+
+
+static const Reg16 AX   = {  0 };
+static const Reg16 CX   = {  1 };
+static const Reg16 DX   = {  2 };
+static const Reg16 BX   = {  3 };
+static const Reg16 SP   = {  4 };
+static const Reg16 BP   = {  5 };
+static const Reg16 SI   = {  6 };
+static const Reg16 DI   = {  7 };
+static const Reg16 R8W  = {  8 };
+static const Reg16 R9W  = {  9 };
+static const Reg16 R10W = { 10 };
+static const Reg16 R11W = { 11 };
+static const Reg16 R12W = { 12 };
+static const Reg16 R13W = { 13 };
+static const Reg16 R14W = { 14 };
+static const Reg16 R15W = { 15 };
+static const Reg16 Reg16_None = { 16 };
+
+
+static const DisplacementScale Scale1x = { 0 };
+static const DisplacementScale Scale2x = { 1 };
+static const DisplacementScale Scale4x = { 2 };
+static const DisplacementScale Scale8x = { 3 };
+
+
+void x86_64_PushQReg64(x86_64_AssemblerContext *c, Reg64 r);
+void x86_64_PushWReg16(x86_64_AssemblerContext *c, Reg16 r);
+void x86_64_PushDImm32(x86_64_AssemblerContext *c, u32 value);
+void x86_64_PushWImm16(x86_64_AssemblerContext *c, u16 value);
+void x86_64_PushQRM64(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale);
+void x86_64_PushWRM64(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale);
+void x86_64_PushQRM32(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale);
+void x86_64_PushWRM32(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale);
+
+void x86_64_Ret(x86_64_AssemblerContext *c);
 
 #define SLLL_ASSEMBERS_X86_64
 #endif

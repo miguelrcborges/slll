@@ -2,7 +2,6 @@
 
 #include <mbbase.h>
 
-
 #define assert(x) if (!(x)) __builtin_trap()
 
 
