@@ -1,13 +1,14 @@
+#define SLLL_ASSEMBLER_X86_64_NO_MACROS
 #include "x86_64.h"
 
-force_inline x86_64_WriteByte(x86_64_AssemblerContext *c, u8 byte) {
+
+force_inline void x86_64_WriteByte(x86_64_AssemblerContext *c, u8 byte) {
 	assert(c->assember_output_memory_cursor < c->assembler_output_memory_size);
 	c->assembler_output_memory[c->assember_output_memory_cursor] = byte;
 	c->assember_output_memory_cursor += 1;
 }
 
-
-static x86_64_WriteRM64Instruction(
+static void x86_64_WriteRM64Instruction(
 		x86_64_AssemblerContext *c, 
 		u8 first_byte, u8 opcode, 
 		i32 offset, Reg64 base, Reg64 index, DisplacementScale scale) 
@@ -120,23 +121,23 @@ void x86_64_PushWImm16(x86_64_AssemblerContext *c, u16 value) {
 	}
 }
 
-void x86_64_PushQRM64(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale) {
+void (x86_64_PushQRM64)(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale) {
 	x86_64_WriteRM64Instruction(c, 0xFF, 6, offset, base, index, scale);
 }
 
-void x86_64_PushWRM64(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale) {
+void (x86_64_PushWRM64)(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale) {
 	x86_64_WriteByte(c, 0x66);
 	x86_64_PushQRM64(c, offset, base, index, scale);
 }
 
-void x86_64_PushQRM32(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale) {
+void (x86_64_PushQRM32)(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale) {
 	x86_64_WriteByte(c, 0x67);
 	Reg64 new_base = { base.Value };
 	Reg64 new_index = { index.Value };
 	x86_64_PushQRM64(c, offset, new_base, new_index, scale);
 }
 
-void x86_64_PushWRM32(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale) {
+void (x86_64_PushWRM32)(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale) {
 	x86_64_WriteByte(c, 0x67);
 	Reg64 new_base = { base.Value };
 	Reg64 new_index = { index.Value };
@@ -159,23 +160,23 @@ void x86_64_PopWReg16(x86_64_AssemblerContext *c, Reg16 r) {
 	x86_64_PopQReg64(c, new_reg);
 }
 
-void x86_64_PopQRM64(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale) {
+void (x86_64_PopQRM64)(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale) {
 	x86_64_WriteRM64Instruction(c, 0x8F, 0, offset, base, index, scale);
 }
 
-void x86_64_PopWRM64(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale) {
+void (x86_64_PopWRM64)(x86_64_AssemblerContext *c, i32 offset, Reg64 base, Reg64 index, DisplacementScale scale) {
 	x86_64_WriteByte(c, 0x66);
 	x86_64_PopQRM64(c, offset, base, index, scale);
 }
 
-void x86_64_PopQRM32(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale) {
+void (x86_64_PopQRM32)(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale) {
 	Reg64 new_base = { base.Value };
 	Reg64 new_index = { index.Value };
 	x86_64_WriteByte(c, 0x67);
 	x86_64_PopQRM64(c, offset, new_base, new_index, scale);
 }
 
-void x86_64_PopWRM32(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale) {
+void (x86_64_PopWRM32)(x86_64_AssemblerContext *c, i32 offset, Reg32 base, Reg32 index, DisplacementScale scale) {
 	x86_64_WriteByte(c, 0x66);
 	x86_64_PopQRM32(c, offset, base, index, scale);
 }

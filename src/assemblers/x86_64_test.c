@@ -146,7 +146,7 @@ int main(void) {
 	x86_64_PopWRM64(&c, -33, R15, R15, Scale8x);
 	TestSlice(0x66, 0x43, 0x8F, 0x44, 0xFF, 0xDF);
 
-	x86_64_PopQRM32(&c, 42, R10D, Reg32_None, Scale1x);
+	x86_64_PopQRM32(&c, 42, Reg32_None, R10D, Scale1x);
 	TestSlice(0x67, 0x41, 0x8F, 0x42, 0x2A);
 
 	x86_64_PopWRM32(&c, -4444, ESP, ECX, Scale2x);
