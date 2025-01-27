@@ -1,6 +1,4 @@
-#define SLLL_ASSEMBLER_X86_64_NO_MACROS
 #include "x86_64.h"
-
 
 force_inline void x86_64_WriteByte(x86_64_AssemblerContext *c, u8 byte) {
 	assert(c->assember_output_memory_cursor < c->assembler_output_memory_size);
