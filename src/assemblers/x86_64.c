@@ -23,8 +23,20 @@ static void x86_64_WriteRM64Instruction(
 		x86_64_WriteByte(c, (u8) ((u32)offset >> 16));
 		x86_64_WriteByte(c, (u8) ((u32)offset >> 24));
 	} else {
-		u8 is_base_extension = (base.Value >= R8.Value) && (base.Value <= R15.Value);
-		u8 is_index_extension = (index.Value >= R8.Value) && (index.Value <= R15.Value);
+		// Small optimization if the user provides silly input
+		if (unlikely(base.Value == Reg64_None.Value && index.Value != Reg64_None.Value && scale.Value == Scale1x.Value)) {
+			Reg64_Optional tmp = base;
+			base = index;
+			index = tmp;
+		}
+		bool can_offset_be_single_byte = offset >= -128 && offset <= 127;
+		bool is_base_none = base.Value == Reg64_None.Value;
+		bool is_index_none = index.Value == Reg64_None.Value;
+		bool is_base_extension = (base.Value >= R8.Value) && (base.Value <= R15.Value);
+		bool is_index_extension = (index.Value >= R8.Value) && (index.Value <= R15.Value);
+		bool is_rbp_base = base.Value == RBP.Value;
+		bool write_offset = is_rbp_base || offset != 0;
+		bool write_single_byte = can_offset_be_single_byte && !is_base_none;
 		if (is_base_extension || is_index_extension) {
 			u8 byte_to_write = is_base_extension ? 0x41 : 0x42;
 			byte_to_write = is_base_extension && is_index_extension ? 0x43 : byte_to_write;
@@ -33,11 +45,10 @@ static void x86_64_WriteRM64Instruction(
 			x86_64_WriteByte(c, byte_to_write);
 		}
 		x86_64_WriteByte(c, first_byte);
-		u8 can_offset_be_single_byte = offset >= -128 && offset <= 127;
-		if (index.Value != Reg64_None.Value) {
+		if (!is_index_none) {
 			u8 rm_byte = (opcode << 3) | 0b100;
-			if (offset != 0) {
-				if (can_offset_be_single_byte) {
+			if (write_offset && !is_base_none) {
+				if (write_single_byte) {
 					rm_byte |= 0b01 << 6;
 				} else {
 					rm_byte |= 0b10 << 6;
@@ -46,12 +57,12 @@ static void x86_64_WriteRM64Instruction(
 			x86_64_WriteByte(c, rm_byte);
 			u8 sib_byte = scale.Value << 6;
 			sib_byte |= (index.Value << 3); // Note that regs >= R8 are set back to RAX-RDI range
-			sib_byte |= base.Value;
+			sib_byte |= is_base_none ? 0b101 : base.Value;
 			x86_64_WriteByte(c, sib_byte);
 		} else {
 			u8 modrm_byte = opcode << 3;
-			if (offset != 0) {
-				if (can_offset_be_single_byte) {
+			if (write_offset) {
+				if (write_single_byte) {
 					modrm_byte |= 0b01 << 6;
 				} else {
 					modrm_byte |= 0b10 << 6;
@@ -63,8 +74,8 @@ static void x86_64_WriteRM64Instruction(
 				x86_64_WriteByte(c, 0x24);      // Has to be set as a base of the SIB byte
 			}
 		}
-		if (offset != 0) {
-			if (can_offset_be_single_byte) {
+		if (write_offset) {
+			if (write_single_byte) {
 				x86_64_WriteByte(c, (u8) ((u32)offset));
 			} else {
 				x86_64_WriteByte(c, (u8) ((u32)offset));
