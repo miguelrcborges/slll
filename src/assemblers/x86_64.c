@@ -38,11 +38,12 @@ static void x86_64_WriteRM64Instruction(
 		bool write_offset = is_rbp_base || offset != 0;
 		bool write_single_byte = can_offset_be_single_byte && !is_base_none;
 		if (is_base_extension || is_index_extension) {
-			u8 byte_to_write = is_base_extension ? 0x41 : 0x42;
-			byte_to_write = is_base_extension && is_index_extension ? 0x43 : byte_to_write;
+			u8 rex = 0x40;
+			rex = is_base_extension ? rex + 1 : rex;
+			rex = is_index_extension ? rex + 2 : rex;
 			base.Value = is_base_extension ? base.Value - R8.Value : base.Value;
 			index.Value = is_index_extension ? index.Value - R8.Value : index.Value;
-			x86_64_WriteByte(c, byte_to_write);
+			x86_64_WriteByte(c, rex);
 		}
 		x86_64_WriteByte(c, first_byte);
 		if (!is_index_none) {
@@ -85,6 +86,49 @@ static void x86_64_WriteRM64Instruction(
 			}
 		}
 	}
+}
+
+static void x86_64_WriteRegRegMov(x86_64_AssemblerContext *c, Reg64 dest, Reg64 from, u8 opcode, u8 rex) {
+	if (dest.Value >= R8.Value) {
+		dest.Value -= R8.Value;
+		rex |= 0b001;
+	}
+	if (from.Value >= R8.Value) {
+		from.Value -= R8.Value;
+		rex |= 0b100;
+	}
+	if (rex != 0b01000000) {
+		x86_64_WriteByte(c, rex);
+	}
+	x86_64_WriteByte(c, opcode);
+	u8 rm = 0b11 << 6;
+	rm |= from.Value << 3;
+	rm |= dest.Value;
+	x86_64_WriteByte(c, rm);
+}
+
+
+void x86_64_MovQReg64Reg64(x86_64_AssemblerContext *c, Reg64 dest, Reg64 from) {
+	x86_64_WriteRegRegMov(c, dest, from, 0x89, 0b01001000);
+}
+
+void x86_64_MovDReg32Reg32(x86_64_AssemblerContext *c, Reg32 dest, Reg32 from) {
+	Reg64 new_dest = { dest.Value };
+	Reg64 new_from = { from.Value };
+	x86_64_WriteRegRegMov(c, new_dest, new_from, 0x89, 0b01000000);
+}
+
+void x86_64_MovWReg16Reg16(x86_64_AssemblerContext *c, Reg16 dest, Reg16 from) {
+	Reg32 new_dest = { dest.Value };
+	Reg32 new_from = { from.Value };
+	x86_64_WriteByte(c, 0x66);
+	x86_64_MovDReg32Reg32(c, new_dest, new_from);
+}
+
+void x86_64_MovBReg8Reg8(x86_64_AssemblerContext *c, Reg8 dest, Reg8 from) {
+	Reg64 new_dest = { dest.Value };
+	Reg64 new_from = { from.Value };
+	x86_64_WriteRegRegMov(c, new_dest, new_from, 0x88, 0b01000000);
 }
 
 

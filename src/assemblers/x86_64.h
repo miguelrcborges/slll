@@ -44,6 +44,18 @@ typedef struct {
 	Reg16_Optional: ((Reg16_Optional) { x.Value }), \
 	default: (x))
 
+typedef struct {
+	u8 Value;
+} Reg8;
+
+typedef struct {
+	u8 Value;
+} Reg8_Optional;
+
+#define Reg8OrNone(x) _Generic((x), \
+	Reg8_Optional: ((Reg8_Optional) { x.Value }), \
+	default: (x))
+
 
 typedef struct {
 	u8 Value;
@@ -107,11 +119,35 @@ static const Reg16 R15W = { 15 };
 static const Reg16_Optional Reg16_None = { 16 };
 
 
+static const Reg8 AL   = {  0 };
+static const Reg8 CL   = {  1 };
+static const Reg8 DL   = {  2 };
+static const Reg8 BL   = {  3 };
+static const Reg8 AH   = {  4 };
+static const Reg8 CH   = {  5 };
+static const Reg8 DH   = {  6 };
+static const Reg8 BH   = {  7 };
+static const Reg8 R8B  = {  8 };
+static const Reg8 R9B  = {  9 };
+static const Reg8 R10B = { 10 };
+static const Reg8 R11B = { 11 };
+static const Reg8 R12B = { 12 };
+static const Reg8 R13B = { 13 };
+static const Reg8 R14B = { 14 };
+static const Reg8 R15B = { 15 };
+static const Reg8_Optional Reg8_None = { 16 };
+
+
 static const DisplacementScale Scale1x = { 0 };
 static const DisplacementScale Scale2x = { 1 };
 static const DisplacementScale Scale4x = { 2 };
 static const DisplacementScale Scale8x = { 3 };
 
+
+void x86_64_MovQReg64Reg64(x86_64_AssemblerContext *c, Reg64 dest, Reg64 from);
+void x86_64_MovDReg32Reg32(x86_64_AssemblerContext *c, Reg32 dest, Reg32 from);
+void x86_64_MovWReg16Reg16(x86_64_AssemblerContext *c, Reg16 dest, Reg16 from);
+void x86_64_MovBReg8Reg8(x86_64_AssemblerContext *c, Reg8 dest, Reg8 from);
 
 void x86_64_PopQReg64(x86_64_AssemblerContext *c, Reg64 r);
 void x86_64_PopWReg16(x86_64_AssemblerContext *c, Reg16 r);
@@ -123,7 +159,6 @@ void x86_64_PopQRM32(x86_64_AssemblerContext *c, i32 offset, Reg32_Optional base
 #define x86_64_PopQRM32(c, off, base, index, scale) x86_64_PopQRM32(c, off, Reg32OrNone(base), Reg32OrNone(index), scale)
 void x86_64_PopWRM32(x86_64_AssemblerContext *c, i32 offset, Reg32_Optional base, Reg32_Optional index, DisplacementScale scale);
 #define x86_64_PopWRM32(c, off, base, index, scale) x86_64_PopWRM32(c, off, Reg32OrNone(base), Reg32OrNone(index), scale)
-
 
 void x86_64_PushQReg64(x86_64_AssemblerContext *c, Reg64 r);
 void x86_64_PushWReg16(x86_64_AssemblerContext *c, Reg16 r);

@@ -40,6 +40,43 @@ int main(void) {
 #elif
 	#error "Not implemented in this platform."
 #endif
+	/* MOV */
+	x86_64_MovQReg64Reg64(&c, RDI, RAX);
+	TestSlice(0x48, 0x89, 0xC7);
+
+	x86_64_MovQReg64Reg64(&c, RBX, RDI);
+	TestSlice(0x48, 0x89, 0xFB);
+
+	x86_64_MovQReg64Reg64(&c, RSI, R10);
+	TestSlice(0x4C, 0x89, 0xD6);
+
+	x86_64_MovQReg64Reg64(&c, R14, RBP);
+	TestSlice(0x49, 0x89, 0xEE);
+
+	x86_64_MovQReg64Reg64(&c, R13, R11);
+	TestSlice(0x4D, 0x89, 0xDD);
+
+	x86_64_MovQReg64Reg64(&c, R8, R15);
+	TestSlice(0x4D, 0x89, 0xF8);
+
+	x86_64_MovDReg32Reg32(&c, EBP, EBX);
+	TestSlice(0x89, 0xDD);
+
+	x86_64_MovDReg32Reg32(&c, EAX, R8D);
+	TestSlice(0x44, 0x89, 0xC0);
+
+	x86_64_MovWReg16Reg16(&c, DX, SI);
+	TestSlice(0x66, 0x89, 0xF2);
+
+	x86_64_MovWReg16Reg16(&c, R11W, SP);
+	TestSlice(0x66, 0x41, 0x89, 0xE3);
+
+	x86_64_MovBReg8Reg8(&c, R12B, R14B);
+	TestSlice(0x45, 0x88, 0xF4);
+
+	x86_64_MovBReg8Reg8(&c, DL, DH);
+	TestSlice(0x88, 0xF2);
+
 
 	/* PUSH */
 	x86_64_PushQReg64(&c, RAX);
